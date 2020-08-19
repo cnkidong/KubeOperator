@@ -1,8 +1,10 @@
 package main
 
 //go:generate go-bindata -o ./pkg/i18n/locales.go -pkg i18n ./locales/...
+//go:generate swag init
 
 import (
+	_ "github.com/KubeOperator/KubeOperator/docs"
 	"github.com/KubeOperator/KubeOperator/pkg/server"
 	_ "golang.org/x/text/message"
 	_ "golang.org/x/text/message/catalog"
@@ -17,7 +19,6 @@ import (
 // @contact.email support@fit2cloud.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @ho- st localhost:8080
 // @BasePath /api/v1
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header

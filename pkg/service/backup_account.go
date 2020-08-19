@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	CheckFailed = "CHECK_FAILED"
+	CheckFailed            = "CHECK_FAILED"
+	BackupAccountNameExist = "NAME_EXISTS"
 )
 
 type BackupAccountService interface {
@@ -25,6 +26,7 @@ type BackupAccountService interface {
 	Update(creation dto.BackupAccountRequest) (*dto.BackupAccount, error)
 	Batch(op dto.BackupAccountOp) error
 	GetBuckets(request dto.CloudStorageRequest) ([]interface{}, error)
+	Delete(name string) error
 }
 
 type backupAccountService struct {
@@ -84,6 +86,11 @@ func (b backupAccountService) Page(num, size int) (page.Page, error) {
 
 func (b backupAccountService) Create(creation dto.BackupAccountRequest) (*dto.BackupAccount, error) {
 
+	old, _ := b.Get(creation.Name)
+	if old != nil && old.ID != "" {
+		return nil, errors.New(BackupAccountNameExist)
+	}
+
 	err := b.CheckValid(creation)
 	if err != nil {
 		return nil, err
@@ -106,11 +113,11 @@ func (b backupAccountService) Create(creation dto.BackupAccountRequest) (*dto.Ba
 }
 
 func (b backupAccountService) Update(creation dto.BackupAccountRequest) (*dto.BackupAccount, error) {
+
 	err := b.CheckValid(creation)
 	if err != nil {
 		return nil, err
 	}
-
 	credential, _ := json.Marshal(creation.CredentialVars)
 	old, err := b.backupAccountRepo.Get(creation.Name)
 	if err != nil {
@@ -188,4 +195,8 @@ func (b backupAccountService) CheckValid(create dto.BackupAccountRequest) error 
 		}
 	}
 	return nil
+}
+
+func (b backupAccountService) Delete(name string) error {
+	return b.backupAccountRepo.Delete(name)
 }

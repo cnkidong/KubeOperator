@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/KubeOperator/KubeOperator/pkg/constant"
+	"github.com/KubeOperator/KubeOperator/pkg/db"
 	"github.com/KubeOperator/KubeOperator/pkg/dto"
 	"github.com/KubeOperator/KubeOperator/pkg/model"
 	"github.com/KubeOperator/KubeOperator/pkg/repository"
 	clusterUtil "github.com/KubeOperator/KubeOperator/pkg/util/cluster"
+	"github.com/KubeOperator/KubeOperator/pkg/util/kubeconfig"
+	"github.com/KubeOperator/KubeOperator/pkg/util/ssh"
 	"github.com/KubeOperator/KubeOperator/pkg/util/webkubectl"
 )
 
@@ -20,6 +23,7 @@ type ClusterService interface {
 	GetApiServerEndpoint(name string) (dto.Endpoint, error)
 	GetRouterEndpoint(name string) (dto.Endpoint, error)
 	GetWebkubectlToken(name string) (dto.WebkubectlToken, error)
+	GetKubeconfig(name string) (string, error)
 	Delete(name string) error
 	Create(creation dto.ClusterCreate) (dto.Cluster, error)
 	List() ([]dto.Cluster, error)
@@ -299,37 +303,67 @@ func (c clusterService) GetWebkubectlToken(name string) (dto.WebkubectlToken, er
 }
 
 func (c clusterService) Delete(name string) error {
-	return c.clusterRepo.Delete(name)
+	cluster, err := c.Get(name)
+	if err != nil {
+		return err
+	}
+	switch cluster.Source {
+	case constant.ClusterSourceLocal:
+		switch cluster.Status {
+		case constant.ClusterRunning:
+			go c.clusterTerminalService.Terminal(cluster.Cluster)
+		case constant.ClusterCreating, constant.ClusterInitializing:
+			return errors.New("CLUSTER_DELETE_FAILED")
+		case constant.ClusterFailed:
+			if cluster.Spec.Provider == constant.ClusterProviderPlan {
+				var hosts []model.Host
+				db.DB.Where(model.Host{ClusterID: cluster.ID}).Find(&hosts)
+				if len(hosts) > 0 {
+					go c.clusterTerminalService.Terminal(cluster.Cluster)
+				}
+			} else {
+				return c.clusterRepo.Delete(name)
+			}
+		}
+	case constant.ClusterSourceExternal:
+		err = c.clusterRepo.Delete(name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c clusterService) Batch(batch dto.ClusterBatch) error {
 	switch batch.Operation {
 	case constant.BatchOperationDelete:
 		for _, item := range batch.Items {
-			cluster, err := c.Get(item.Name)
+			err := c.Delete(item.Name)
 			if err != nil {
 				return err
-			}
-			switch cluster.Source {
-			case constant.ClusterSourceLocal:
-				switch cluster.Status {
-				case constant.ClusterRunning:
-					go c.clusterTerminalService.Terminal(cluster.Cluster)
-				case constant.ClusterCreating, constant.ClusterInitializing:
-					return errors.New("CLUSTER_DELETE_FAILED")
-				case constant.ClusterFailed:
-					err = c.Delete(item.Name)
-					if err != nil {
-						return err
-					}
-				}
-			case constant.ClusterSourceExternal:
-				err = c.Delete(item.Name)
-				if err != nil {
-					return err
-				}
 			}
 		}
 	}
 	return nil
+}
+
+func (c clusterService) GetKubeconfig(name string) (string, error) {
+	cluster, err := c.clusterRepo.Get(name)
+	if err != nil {
+		return "", err
+	}
+	m, err := c.clusterNodeRepo.FistMaster(cluster.ID)
+	if err != nil {
+		return "", err
+	}
+	cfg := m.ToSSHConfig()
+	s, err := ssh.New(&cfg)
+	if err != nil {
+		return "", err
+	}
+	bf, err := kubeconfig.ReadKubeConfigFile(s)
+	if err != nil {
+		return "", err
+	}
+	return string(bf), nil
 }

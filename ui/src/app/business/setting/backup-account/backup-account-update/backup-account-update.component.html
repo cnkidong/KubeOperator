@@ -1,24 +1,16 @@
 <clr-modal [(clrModalOpen)]="opened" [clrModalClosable]="false">
-    <h3 class="modal-title">{{'APP_ADD_BACKUP_ACCOUNT'|translate}}</h3>
+    <h3 class="modal-title">{{'APP_UPDATE_BACKUP_ACCOUNT'|translate}}</h3>
 
     <div class="modal-body modal-height">
         <form clrForm #backupAccountForm="ngForm">
             <clr-input-container>
                 <label>{{'APP_NAME'|translate}}</label>
-                <input clrInput size=45 maxlength="15" type="text" [(ngModel)]="item.name"
+                <input clrInput size=45 maxlength="15" type="text" [(ngModel)]="item.name" readonly
                        name="name" required>
             </clr-input-container>
-<!--            <clr-select-container>-->
-<!--                <label>{{'APP_TYPE'|translate}}:</label>-->
-<!--                <select clrSelect name="type" [(ngModel)]="item.type" (ngModelChange)="changeType()" required>-->
-<!--                    <option value="OSS">oss</option>-->
-<!--                    <option value="S3">s3</option>-->
-<!--                    <option value="AZURE">azure</option>-->
-<!--                </select>-->
-<!--            </clr-select-container>-->
             <clr-input-container>
                 <label>{{'APP_TYPE'|translate}}</label>
-                <input clrInput size=45 type="text" [(ngModel)]="item.type" name="type"
+                <input clrInput size=45 type="text" [(ngModel)]="item.type" name="type" readonly
                        required>
             </clr-input-container>
             <div *ngIf="item.type=='OSS' || item.type=='S3'">

@@ -1,4 +1,5 @@
 #common
+NAME_EXISTS: "Name already exists"
 
 #cluster
 CLUSTER_DELETE_FAILED: "can not delete cluster in current state"
@@ -11,6 +12,8 @@ DEFAULT_CREDENTIAL_CAN_NOT_DELETE: "Default credential cannot be deleted"
 HOST_ALREADY_EXISTS: "Host already exists"
 DELETE_HOST_FAILED: "Failed to delete! The host is already associated with the cluster"
 DELETE_HOST_FAILED_BY_PROJECT: "Failed to delete! The host is already associated with the project"
+SYSTEM_IP_NOT_FOUND: "Please fill in the local IP first！"
+NO_IP_AVAILABLE: "No Ip available"
 
 #user
 PASSWORD_NOT_MATCH: "The password is incorrect"
@@ -46,10 +49,19 @@ NODE_ALREADY_RUNNING_TASK: "Add node or delete node already running,please wait 
 PARAM_EMPTY: "Insufficient parameters"
 NOT_SUPPORT: "Unsupported type"
 CHECK_FAILED: "Verification failed"
+DELETE_BACKUP_ACCOUNT_FAILED_BY_PROJECT: "Failed to delete! The backupAccount is already associated with the project"
 
 #plan
 DELETE_FAILED_BY_PROJECT: "Failed to delete! The plan is already associated with the project"
 
+#clusterBackup
+BACKUP_FILES_NOT_NULL: "Please delete the backup file before switching the backup account"
+CLUSTER_IS_BACKUP: "The cluster is being backed up！"
+CLUSTER_IS_RESTORE: "The cluster is restoring！"
+
+#projectResource
+DELETE_FAILED_BY_BACKUP_FILE: "Please delete the backup file first！"
+DELETE_HOST_FAILED_BY_CLUSTER: "The host already belongs to the cluster! This operation cannot be performed!"
 
 
 

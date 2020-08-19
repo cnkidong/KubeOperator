@@ -13,6 +13,7 @@ import (
 
 var (
 	HostAlreadyExistsErr = "HOST_ALREADY_EXISTS"
+	SystemIpNotFound     = "SYSTEM_IP_NOT_FOUND"
 )
 
 type HostController struct {
@@ -28,6 +29,15 @@ func NewHostController() *HostController {
 	}
 }
 
+// List Host
+// @Tags hosts
+// @Summary Show all hosts
+// @Description Show hosts
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} page.Page
+// @Security ApiKeyAuth
+// @Router /hosts/ [get]
 func (h HostController) Get() (page.Page, error) {
 
 	p, _ := h.Ctx.Values().GetBool("page")
@@ -48,10 +58,34 @@ func (h HostController) Get() (page.Page, error) {
 	}
 }
 
-func (h HostController) GetBy(name string) (dto.Host, error) {
-	return h.HostService.Get(name)
+// Get Host
+// @Tags hosts
+// @Summary Show a host
+// @Description show a host by name
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} dto.Host
+// @Security ApiKeyAuth
+// @Router /hosts/{name}/ [get]
+func (h HostController) GetBy(name string) (*dto.Host, error) {
+	ho, err := h.HostService.Get(name)
+	if err != nil {
+		return nil, err
+	}
+	return &ho, nil
+
 }
 
+// Create Host
+// @Tags hosts
+// @Summary Create a host
+// @Description create a host
+// @Accept  json
+// @Produce  json
+// @Param request body dto.HostCreate true "request"
+// @Success 200 {object} dto.Host
+// @Security ApiKeyAuth
+// @Router /hosts/ [post]
 func (h HostController) Post() (*dto.Host, error) {
 	var req dto.HostCreate
 	err := h.Ctx.ReadJSON(&req)
@@ -66,10 +100,10 @@ func (h HostController) Post() (*dto.Host, error) {
 
 	localIp, err := h.SystemSettingService.Get("ip")
 	if err != nil {
-		return nil, err
+		return nil, errors.New(SystemIpNotFound)
 	}
 	if localIp.Value == req.Ip {
-		return nil, errors.New(fmt.Sprintf("%s is localIp, can not imported", localIp))
+		return nil, errors.New(fmt.Sprintf("%s is localIp, can not imported", localIp.Value))
 	}
 	item, _ := h.HostService.Get(req.Name)
 	if item.ID != "" {
@@ -82,6 +116,14 @@ func (h HostController) Post() (*dto.Host, error) {
 	return &item, nil
 }
 
+// Delete Host
+// @Tags hosts
+// @Summary Delete a host
+// @Description delete a host by name
+// @Accept  json
+// @Produce  json
+// @Security ApiKeyAuth
+// @Router /hosts/{name}/ [delete]
 func (h HostController) Delete(name string) error {
 	return h.HostService.Delete(name)
 }

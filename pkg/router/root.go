@@ -2,11 +2,14 @@ package router
 
 import (
 	"fmt"
+	"github.com/KubeOperator/KubeOperator/pkg/auth"
 	"github.com/KubeOperator/KubeOperator/pkg/i18n"
 	"github.com/KubeOperator/KubeOperator/pkg/middleware"
 	"github.com/KubeOperator/KubeOperator/pkg/router/proxy"
 	v1 "github.com/KubeOperator/KubeOperator/pkg/router/v1"
 	"github.com/KubeOperator/KubeOperator/pkg/router/xpack"
+	"github.com/iris-contrib/swagger/v12"
+	"github.com/iris-contrib/swagger/v12/swaggerFiles"
 	"github.com/kataras/iris/v12"
 )
 
@@ -21,13 +24,14 @@ func Server() *iris.Application {
 	app.I18n.ExtractFunc = func(ctx iris.Context) string {
 		return ctx.URLParam("l")
 	}
-	app.Post("/api/auth/login", middleware.LoginHandler)
-	app.Get("/api/auth/profile", middleware.JWTMiddleware().Serve, middleware.GetAuthUser)
+	c := &swagger.Config{
+		URL: "/swagger/doc.json",
+	}
+	app.Get("/swagger/{any:path}", swagger.CustomWrapHandler(c, swaggerFiles.Handler))
+	app.Post("/api/v1/auth/login", auth.LoginHandler)
+	app.Get("/api/v1/auth/profile", middleware.JWTMiddleware().Serve, middleware.GetAuthUser)
 	proxy.RegisterProxy(app)
 	api := app.Party("/api")
-	api.Use(middleware.PagerMiddleware)
-	api.Use(middleware.JWTMiddleware().Serve)
-	api.Use(middleware.UserMiddleware)
 	v1.V1(api)
 	xpack.XPack(api)
 	return app

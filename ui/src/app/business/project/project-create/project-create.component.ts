@@ -7,6 +7,7 @@ import {CommonAlertService} from '../../../layout/common-alert/common-alert.serv
 import {TranslateService} from '@ngx-translate/core';
 import {NgForm} from '@angular/forms';
 import {AlertLevels} from '../../../layout/common-alert/alert';
+import {NamePattern, NamePatternHelper} from '../../../constant/pattern';
 
 @Component({
     selector: 'app-project-create',
@@ -15,7 +16,8 @@ import {AlertLevels} from '../../../layout/common-alert/alert';
 })
 export class ProjectCreateComponent extends BaseModelComponent<Project> implements OnInit {
 
-
+    namePattern = NamePattern;
+    namePatternHelper = NamePatternHelper;
     opened = false;
     item: ProjectCreateRequest = new ProjectCreateRequest();
     isSubmitGoing = false;
@@ -51,7 +53,7 @@ export class ProjectCreateComponent extends BaseModelComponent<Project> implemen
             this.commonAlertService.showAlert(this.translateService.instant('APP_ADD_SUCCESS'), AlertLevels.SUCCESS);
         }, error => {
             this.isSubmitGoing = false;
-            this.modalAlertService.showAlert(error, AlertLevels.ERROR);
+            this.modalAlertService.showAlert(error.error.msg, AlertLevels.ERROR);
         });
     }
 }

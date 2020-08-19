@@ -14,6 +14,7 @@ import {ZoneService} from '../../zone/zone.service';
 import {AlertLevels} from '../../../../layout/common-alert/alert';
 import {ProjectService} from '../../../project/project.service';
 import {Project} from '../../../project/project';
+import {NamePattern, NamePatternHelper} from '../../../../constant/pattern';
 
 @Component({
     selector: 'app-plan-create',
@@ -22,6 +23,8 @@ import {Project} from '../../../project/project';
 })
 export class PlanCreateComponent extends BaseModelComponent<Plan> implements OnInit {
 
+    namePattern = NamePattern;
+    namePatternHelper = NamePatternHelper;
     opened = false;
     regions: Region[] = [];
     zones: Zone[] = [];
@@ -70,7 +73,7 @@ export class PlanCreateComponent extends BaseModelComponent<Plan> implements OnI
             this.created.emit();
             this.commonAlertService.showAlert(this.translateService.instant('APP_ADD_SUCCESS'), AlertLevels.SUCCESS);
         }, error => {
-            this.modalAlertService.showAlert(error, AlertLevels.ERROR);
+            this.modalAlertService.showAlert(error.error.msg, AlertLevels.ERROR);
         });
     }
 

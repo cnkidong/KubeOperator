@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/KubeOperator/KubeOperator/pkg/cloud_storage"
 	"github.com/KubeOperator/KubeOperator/pkg/constant"
 	"github.com/KubeOperator/KubeOperator/pkg/controller/page"
@@ -11,6 +12,7 @@ import (
 	"github.com/KubeOperator/KubeOperator/pkg/repository"
 	"github.com/KubeOperator/KubeOperator/pkg/service/cluster/adm"
 	"github.com/KubeOperator/KubeOperator/pkg/service/cluster/adm/phases/backup"
+	"github.com/jinzhu/gorm"
 	"time"
 )
 
@@ -20,6 +22,7 @@ type CLusterBackupFileService interface {
 	Batch(op dto.ClusterBackupFileOp) error
 	Backup(creation dto.ClusterBackupFileCreate) error
 	Restore(restore dto.ClusterBackupFileRestore) error
+	Delete(name string) error
 }
 
 type cLusterBackupFileService struct {
@@ -102,7 +105,55 @@ func (c cLusterBackupFileService) Batch(op dto.ClusterBackupFileOp) error {
 	return nil
 }
 
+func (c cLusterBackupFileService) Delete(name string) error {
+	backupFile, err := c.clusterBackupFileRepo.Get(name)
+	if err != nil {
+		return err
+	}
+	backupAccount, err := c.backupAccountRepository.Get(backupFile.ClusterBackupStrategy.BackupAccount.Name)
+	if err != nil {
+		return err
+	}
+	vars := make(map[string]interface{})
+	json.Unmarshal([]byte(backupAccount.Credential), &vars)
+	vars["type"] = backupAccount.Type
+	vars["bucket"] = backupAccount.Bucket
+	client, err := cloud_storage.NewCloudStorageClient(vars)
+	if err != nil {
+		return err
+	}
+	result, err := client.Exist(backupFile.Folder)
+	if err != nil {
+		return err
+	}
+	if result {
+		_, err := client.Delete(backupFile.Folder)
+		if err != nil {
+			return err
+		}
+		return c.clusterBackupFileRepo.Delete(name)
+	} else {
+		return c.clusterBackupFileRepo.Delete(name)
+	}
+}
+
 func (c cLusterBackupFileService) Backup(creation dto.ClusterBackupFileCreate) error {
+
+	backupLog, err := c.clusterLogService.GetRunningLogWithClusterNameAndType(creation.ClusterName, constant.ClusterLogTypeBackup)
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+	if backupLog.ID != "" {
+		return errors.New("CLUSTER_IS_BACKUP")
+	}
+
+	restoreLog, err := c.clusterLogService.GetRunningLogWithClusterNameAndType(creation.ClusterName, constant.ClusterLogTypeRestore)
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+	if restoreLog.ID != "" {
+		return errors.New("CLUSTER_IS_RESTORE")
+	}
 
 	cluster, err := c.clusterService.Get(creation.ClusterName)
 	if err != nil {

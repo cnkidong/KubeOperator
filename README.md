@@ -2,6 +2,7 @@
 
 [![License](http://img.shields.io/badge/license-apache%20v2-blue.svg)](https://github.com/kubeoperator/kubeoperator/blob/master/LICENSE)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/kubeoperator/kubeoperator)](https://github.com/kubeoperator/kubeoperator/releases/latest)
+[![GitHub All Releases](https://img.shields.io/github/downloads/kubeoperator/kubeoperator/total)](https://github.com/kubeoperator/kubeoperator/releases)
 
 > [English](README_EN.md) | 中文
 
@@ -11,17 +12,42 @@ KubeOperator 提供可视化的 Web UI，支持离线环境，支持物理机、
 
 KubeOperator 使用 Terraform 在 IaaS 平台上自动创建主机（用户也可以自行准备主机，比如物理机或者虚机），通过 Ansible 完成自动化部署和变更操作，支持 Kubernetes 集群 从 Day 0 规划，到 Day 1 部署，到 Day 2 运营的全生命周期管理。
 
-KubeOperator 的整体架构：
+## 整体架构
 
 ![Architecture](https://kubeoperator.io/images/screenshot/ko-framework.svg)
 
-> 注： KubeOperator 已通过云原生基金会（CNCF）的 [Kubernetes 软件一致性认证](https://landscape.cncf.io/selected=kube-operator)。
-
 ## Web UI 展示
 
-![Web UI](https://kubeoperator.io/images/screenshot/6.png)
+![Web UI](https://kubeoperator.io/images/screenshot/05.jpg)
 
 >更多功能截屏点击：[这里](https://kubeoperator.io/features.html)
+
+## 快速开始
+
+仅需两步快速安装 KubeOperator：
+
+ 1. 准备一台不小于 8 G内存的 64位 Linux 主机；
+ 2. 以 root 用户执行如下命令一键安装 MeterSphere。
+
+```sh
+curl -sSL https://github.com/KubeOperator/KubeOperator/releases/latest/download/quick_start.sh | sh
+```
+
+文档和演示视频：
+
+- [完整文档](https://kubeoperator.io/docs/)
+- [演示视频](https://www.bilibili.com/video/BV1jT4y1L7Ur/)
+- [PPT 介绍](https://kubeoperator.io/download/KubeOperator_Intro.pdf)
+
+## 版本说明
+
+KubeOperator 版本号命名规则为：v大版本.功能版本.Bug修复版本。比如：
+
+```
+v1.0.1 是 v1.0.0 之后的Bug修复版本；
+v1.1.0 是 v1.0.0 之后的功能版本。
+```
+像其它优秀开源项目一样，KubeOperator 将每月发布一个功能版本。
 
 ## 技术优势
 
@@ -40,7 +66,7 @@ KubeOperator 的整体架构：
 
 <table class="subscription-level-table">
     <tr class="subscription-level-tr-border">
-        <td class="features-first-td-background-style" rowspan="15">Day 0 规划</td>
+        <td class="features-first-td-background-style" rowspan="16">Day 0 规划</td>
         </td>
         <td class="features-third-td-background-style" rowspan="2">集群模式
         </td>
@@ -52,7 +78,7 @@ KubeOperator 的整体架构：
         </td>
     </tr>    
     <tr class="subscription-level-tr-border">
-        <td class="features-third-td-background-style" rowspan="3">计算方案
+        <td class="features-third-td-background-style" rowspan="4">计算方案
         </td>
         <td class="features-third-td-background-style">独立主机：支持自行准备的虚机、公有云主机和物理机
         </td>  
@@ -63,6 +89,10 @@ KubeOperator 的整体架构：
     </tr>
     <tr class="subscription-level-tr-border">
         <td class="features-third-td-background-style">Openstack 平台：支持自动创建主机 （使用 Terraform）
+        </td>
+    </tr>
+    <tr class="subscription-level-tr-border">
+        <td class="features-third-td-background-style">支持 x86 和 Arm64 CPU 架构
         </td>
     </tr>
     <tr class="subscription-level-tr-border">
@@ -231,18 +261,30 @@ KubeOperator 的整体架构：
 
 具体版本路线图请参考：[Roadmap](https://github.com/KubeOperator/KubeOperator/blob/master/ROADMAP.md)
 
- ## PPT、Demo 视频、使用文档
+## 支持组件
 
--  [PPT 介绍文档](https://kubeoperator.io/download/KubeOperator_Intro.pdf)：KubeOperator 的介绍 PPT;
--  [安装及使用文档](https://docs.kubeoperator.io/)：包括 KubeOperator 安装文档、使用文档、功能截屏、常见问题等;
--  [8 分钟的演示视频](https://kubeoperator-1256577600.file.myqcloud.com/video/KubeOperator2.1.mp4)：详细演示 KubeOperator 的功能;
--  [直播回放](http://live.vhall.com/355489706)：KubeOperator 助力企业运营生产级别的 Kubernetes 集群。
+- 核心
+  - [kubernetes](https://github.com/kubernetes/kubernetes) v1.18.4
+  - [etcd](https://github.com/coreos/etcd) v3.4.9
+  - [docker](https://www.docker.com/) v19.03.9
+  - [containerd](https://containerd.io/) v1.3.6
+- 网络
+  - [calico](https://github.com/projectcalico/calico) v3.14.1
+  - [flanneld](https://github.com/coreos/flannel) v0.12.0
+- 应用
+  - [coredns](https://github.com/coredns/coredns) v1.6.7
+  - [helm](https://github.com/helm/helm) v3.2.4
+  - [traefik](https://github.com/containous/traefik) v2.2.1
+  - [ingress-nginx](https://github.com/kubernetes/ingress-nginx) v0.32.0
+  - [node-problem-detector](https://github.com/kubernetes/node-problem-detector) v0.8.1
+  - [metrics-server](https://github.com/kubernetes-sigs/metrics-server) v0.3.6
+  - [nfs-provisioner](https://github.com/kubernetes-incubator/external-storage) v3.1.0-k8s1.11
+  - [rook-ceph](https://github.com/rook/rook) v1.3.6
+  - [rbd-provisioner](https://github.com/kubernetes-incubator/external-storage) v2.1.1-k8s1.11
 
-## 沟通交流
- 
-- 技术交流 QQ 群：825046920
-- 微信群： 搜索微信号 wzk727912172，添加好友，备注（城市-github用户名）, 验证通过会加入群聊
-- 技术咨询：https://jinshuju.net/f/QrZJpt
+## 微信群
+
+![wechat-group](https://kubeoperator.io/docs/img/wechat-group.png)
 
 ## 致谢
 

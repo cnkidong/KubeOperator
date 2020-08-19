@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"github.com/KubeOperator/KubeOperator/pkg/auth"
 	"github.com/KubeOperator/KubeOperator/pkg/controller/page"
 	"github.com/KubeOperator/KubeOperator/pkg/db"
 	"github.com/KubeOperator/KubeOperator/pkg/dto"
@@ -16,6 +15,7 @@ var (
 	OriginalNotMatch = errors.New("ORIGINAL_NOT_MATCH")
 	UserNotFound     = errors.New("USER_NOT_FOUND")
 	UserIsNotActive  = errors.New("USER_IS_NOT_ACTIVE")
+	UserNameExist    = errors.New("NAME_EXISTS")
 )
 
 type UserService interface {
@@ -24,7 +24,7 @@ type UserService interface {
 	Create(creation dto.UserCreate) (*dto.User, error)
 	Page(num, size int) (page.Page, error)
 	Delete(name string) error
-	Update(update dto.UserUpdate) (dto.User, error)
+	Update(update dto.UserUpdate) (*dto.User, error)
 	Batch(op dto.UserOp) error
 	ChangePassword(ch dto.UserChangePassword) error
 }
@@ -64,11 +64,14 @@ func (u userService) List() ([]dto.User, error) {
 
 func (u userService) Create(creation dto.UserCreate) (*dto.User, error) {
 
+	old, _ := u.Get(creation.Name)
+	if old.ID != "" {
+		return nil, UserNameExist
+	}
 	password, err := encrypt.StringEncrypt(creation.Password)
 	if err != nil {
 		return nil, err
 	}
-
 	user := model.User{
 		Name:     creation.Name,
 		Email:    creation.Email,
@@ -84,10 +87,15 @@ func (u userService) Create(creation dto.UserCreate) (*dto.User, error) {
 	return &dto.User{User: user}, err
 }
 
-func (u userService) Update(update dto.UserUpdate) (dto.User, error) {
+func (u userService) Update(update dto.UserUpdate) (*dto.User, error) {
+
+	old, err := u.Get(update.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	user := model.User{
-		ID:       update.ID,
+		ID:       old.ID,
 		Name:     update.Name,
 		Email:    update.Email,
 		IsActive: update.IsActive,
@@ -95,11 +103,11 @@ func (u userService) Update(update dto.UserUpdate) (dto.User, error) {
 		IsAdmin:  update.IsAdmin,
 		Password: update.Password,
 	}
-	err := u.userRepo.Save(&user)
+	err = u.userRepo.Save(&user)
 	if err != nil {
-		return dto.User{}, err
+		return nil, err
 	}
-	return dto.User{User: user}, err
+	return &dto.User{User: user}, err
 }
 
 func (u userService) Page(num, size int) (page.Page, error) {
@@ -156,7 +164,7 @@ func (u userService) ChangePassword(ch dto.UserChangePassword) error {
 	return err
 }
 
-func UserAuth(name string, password string) (sessionUser *auth.SessionUser, err error) {
+func UserAuth(name string, password string) (user *model.User, err error) {
 	var dbUser model.User
 	if db.DB.Where("name = ?", name).First(&dbUser).RecordNotFound() {
 		if db.DB.Where("email = ?", name).First(&dbUser).RecordNotFound() {
@@ -164,7 +172,7 @@ func UserAuth(name string, password string) (sessionUser *auth.SessionUser, err 
 		}
 	}
 	if dbUser.IsActive == false {
-		return dbUser.ToSessionUser(), UserIsNotActive
+		return nil, UserIsNotActive
 	}
 	password, err = encrypt.StringEncrypt(password)
 	if err != nil {
@@ -173,5 +181,5 @@ func UserAuth(name string, password string) (sessionUser *auth.SessionUser, err 
 	if dbUser.Password != password {
 		return nil, PasswordNotMatch
 	}
-	return dbUser.ToSessionUser(), nil
+	return &dbUser, nil
 }

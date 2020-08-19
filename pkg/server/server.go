@@ -58,6 +58,7 @@ func Start() error {
 	bind := fmt.Sprintf("%s:%d",
 		viper.GetString("bind.host"),
 		viper.GetInt("bind.port"))
+
 	if err := s.Run(iris.Addr(bind)); err != nil {
 		return err
 	}

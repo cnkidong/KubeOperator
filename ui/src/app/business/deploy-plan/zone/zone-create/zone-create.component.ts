@@ -13,6 +13,7 @@ import * as ipaddr from 'ipaddr.js';
 import {CredentialService} from '../../../setting/credential/credential.service';
 import {Credential} from '../../../setting/credential/credential';
 import {NgForm} from '@angular/forms';
+import {NamePattern, NamePatternHelper} from '../../../../constant/pattern';
 
 
 @Component({
@@ -22,6 +23,8 @@ import {NgForm} from '@angular/forms';
 })
 export class ZoneCreateComponent extends BaseModelComponent<Zone> implements OnInit {
 
+    namePattern = NamePattern;
+    namePatternHelper = NamePatternHelper;
     opened = false;
     item: ZoneCreateRequest = new ZoneCreateRequest();
     cloudZoneRequest: CloudZoneRequest = new CloudZoneRequest();
@@ -126,7 +129,7 @@ export class ZoneCreateComponent extends BaseModelComponent<Zone> implements OnI
         this.regionService.list().subscribe(res => {
             this.regions = res.items;
         }, error => {
-
+            this.modalAlertService.showAlert(error.error.msg, AlertLevels.ERROR);
         });
     }
 
@@ -145,6 +148,8 @@ export class ZoneCreateComponent extends BaseModelComponent<Zone> implements OnI
         this.zoneService.listClusters(this.cloudZoneRequest).subscribe(res => {
             this.cloudZones = res.result;
             this.loading = false;
+        }, error => {
+
         });
     }
 
@@ -167,6 +172,11 @@ export class ZoneCreateComponent extends BaseModelComponent<Zone> implements OnI
                 this.networkError.push(this.translateService.instant('APP_IP_RANGE_INVALID'));
                 return;
             }
+            if (i === 3 && (end[i] - start[i]) < 1) {
+                this.networkValid = false;
+                this.networkError.push(this.translateService.instant('APP_IP_RANGE_INVALID'));
+                return;
+            }
         }
         const subnet = this.item.cloudVars['subnet'].split('/', 2);
         if (subnet.length !== 2) {
@@ -179,11 +189,20 @@ export class ZoneCreateComponent extends BaseModelComponent<Zone> implements OnI
             this.networkError.push(this.translateService.instant('APP_IP_RANGE_INVALID'));
             return;
         }
-        const gateway = this.item.cloudVars['gateway'];
-        if (!ipaddr.isValid(gateway)) {
-            this.networkValid = false;
-            this.networkError.push(this.translateService.instant('APP_GATEWAY_INVALID'));
-            return;
+        if (this.region.regionVars['provider'] === 'vSphere') {
+            const gateway = this.item.cloudVars['gateway'];
+            if (!ipaddr.isValid(gateway)) {
+                this.networkValid = false;
+                this.networkError.push(this.translateService.instant('APP_GATEWAY_INVALID'));
+                return;
+            }
+            const dns1 = this.item.cloudVars['dns1'];
+            const dns2 = this.item.cloudVars['dns2'];
+            if (!ipaddr.isValid(dns1) || (!ipaddr.isValid(dns2))) {
+                this.networkValid = false;
+                this.networkError.push(this.translateService.instant('APP_DNS_INVALID'));
+                return;
+            }
         }
         this.networkValid = true;
     }

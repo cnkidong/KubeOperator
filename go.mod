@@ -6,7 +6,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.10.0
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/KubeOperator/kobe v0.0.0-20200807092640-bc84e677aae1
-	github.com/KubeOperator/kotf v0.0.4
+	github.com/KubeOperator/kotf v0.0.6
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.4+incompatible
@@ -30,11 +30,12 @@ require (
 	github.com/gophercloud/gophercloud v0.1.0
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/middleware/jwt v0.0.0-20191219204441-78279b78a367
+	github.com/iris-contrib/swagger/v12 v12.0.1
 	github.com/jinzhu/gorm v1.9.12
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/golog v0.0.18 // indirect
-	github.com/kataras/iris/v12 v12.1.2
+	github.com/kataras/iris/v12 v12.1.8
 	github.com/klauspost/compress v1.10.8 // indirect
 	github.com/mailru/easyjson v0.7.1 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect

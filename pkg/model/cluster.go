@@ -12,19 +12,19 @@ import (
 
 type Cluster struct {
 	common.BaseModel
-	ID       string        `json:"_"`
+	ID       string        `json:"-"`
 	Name     string        `json:"name" gorm:"not null;unique"`
 	Source   string        `json:"source"`
-	SpecID   string        `json:"_"`
-	SecretID string        `json:"_"`
-	StatusID string        `json:"_"`
-	PlanID   string        `json:"_"`
-	Plan     Plan          `json:"_"`
+	SpecID   string        `json:"-"`
+	SecretID string        `json:"-"`
+	StatusID string        `json:"-"`
+	PlanID   string        `json:"-"`
+	Plan     Plan          `json:"-"`
 	Spec     ClusterSpec   `gorm:"save_associations:false" json:"spec"`
-	Secret   ClusterSecret `gorm:"save_associations:false" json:"_"`
-	Status   ClusterStatus `gorm:"save_associations:false" json:"_"`
-	Nodes    []ClusterNode `gorm:"save_associations:false" json:"_"`
-	Tools    []ClusterTool `gorm:"save_associations:false" json:"_"`
+	Secret   ClusterSecret `gorm:"save_associations:false" json:"-"`
+	Status   ClusterStatus `gorm:"save_associations:false" json:"-"`
+	Nodes    []ClusterNode `gorm:"save_associations:false" json:"-"`
+	Tools    []ClusterTool `gorm:"save_associations:false" json:"-"`
 }
 
 func (c Cluster) TableName() string {
@@ -132,12 +132,16 @@ func (c Cluster) BeforeDelete() error {
 						tx.Rollback()
 						return err
 					}
-					if err := tx.Delete(&host).Error; err != nil {
-						tx.Rollback()
+					var projectResources []ProjectResource
+					if err := db.DB.Where(ProjectResource{ResourceId: host.ID, ResourceType: constant.ResourceHost}).Find(&projectResources).Error; err != nil {
 						return err
 					}
-					var projectResource ProjectResource
-					if err := tx.Where(ProjectResource{ResourceId: host.ID, ResourceType: constant.ResourceHost}).Delete(&projectResource).Error; err != nil {
+					if len(projectResources) > 0 {
+						for _, p := range projectResources {
+							db.DB.Delete(&p)
+						}
+					}
+					if err := tx.Delete(&host).Error; err != nil {
 						tx.Rollback()
 						return err
 					}
@@ -157,10 +161,24 @@ func (c Cluster) BeforeDelete() error {
 		}
 	}
 
-	err := tx.Model(ProjectResource{}).Where(ProjectResource{ResourceId: c.ID, ResourceType: constant.ResourceCluster}).Delete(ProjectResource{}).Error
-	if err != nil {
+	var projectResource ProjectResource
+	if err := tx.Where(ProjectResource{ResourceId: c.ID, ResourceType: constant.ResourceCluster}).Delete(&projectResource).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
+
+	var clusterBackupStrategy ClusterBackupStrategy
+	if err := tx.Where(ClusterBackupStrategy{ClusterID: c.ID}).Delete(&clusterBackupStrategy).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	var clusterBackupFiles []ClusterBackupFile
+	if err := tx.Where(ClusterBackupFile{ClusterID: c.ID}).Delete(&clusterBackupFiles).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	tx.Commit()
 	return nil
 }
